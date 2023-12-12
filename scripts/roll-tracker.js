@@ -352,27 +352,26 @@ class RollTrackerHelper {
 class RollTrackerData { 
 // Our main data workhorse class
     static getUserRolls(userId) {
-    // A simple retrieve method that gets the stored flag on a specified user
-         const output = {
-            user: game.users.get(userId),    
-            sorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.SORTED),
-            unsorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
-            export: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
-            streak: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
-        } 
-        return output
+        // A simple retrieve method that gets the stored flag on a specified user
+        const user = game.users.get(userId);
+        const output = { user };
+
+        foundry.utils.mergeObject(output, user.flags[RollTracker.ID])
+        return output;
     }
 
     static createTrackedRoll(user, rollData, isBlind) {
         console.log({rollData})
         if (game.userId === user.id) {
+            const trackRollTypes = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE);
+            const rollType = rollData.type || 'other';
         // this check is necessary because (I think) every instance of foundry currently running tries
         // to create and update these rolls. Players, however, do not have permission to edit the data
         // of other users, so errors are thrown. This way the only foundry instance that creates the tracked
         // roll is the foundry instance of the user actually making the roll
             let updatedRolls = []
             const newNumbers = rollData.dice[0].results.map(result => result.result) // In case there's more than one d20 roll in a single instance as in fortune/misfortune rolls
-            let oldSorted = this.getUserRolls(user.id)?.sorted || []
+            let oldSorted = trackRollTypes ? this.getUserRolls(user.id)?.[rollType] || [] : this.getUserRolls(user.id)?.sorted || []
             let oldUnsorted = this.getUserRolls(user.id)?.unsorted || []
             const limit = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.ROLL_STORAGE)
             if (oldUnsorted.length >= limit) {
@@ -452,21 +451,25 @@ class RollTrackerData {
                 updatedRolls = newNumbers
                 oldUnsorted = newNumbers
             }
-            return Promise.all([
-                game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.SORTED, updatedRolls),
-                game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED, oldUnsorted)
-            ])
+
+            if (trackRollTypes) {
+                return Promise.all([
+                    game.users.get(user.id)?.setFlag(RollTracker.ID, rollType, updatedRolls),
+                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED, oldUnsorted)
+                ])
+            } else {
+                return Promise.all([
+                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.SORTED, updatedRolls),
+                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED, oldUnsorted)
+                ])
+            }
         }
     }
 
     static clearTrackedRolls(userId) { 
     // Delete all stored rolls for a specified user ID
-        return Promise.all([
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.SORTED), 
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
-        ])
+        const keys = Object.keys(game.users.get(userId)?.flags[RollTracker.ID]);
+        return Promise.all(keys.map(k => game.users.get(userId)?.unsetFlag(RollTracker.ID, k)));
     }
 
     static sortRolls(rolls) {
