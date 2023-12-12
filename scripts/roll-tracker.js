@@ -158,7 +158,8 @@ class RollTracker {
             RESTRICT_COUNTED_ROLLS: 'restrict_counted_rolls'
         },
         PF2E: {
-            RESTRICT_COUNTED_ROLLS: 'restrict_counted_rolls'
+            RESTRICT_COUNTED_ROLLS: 'restrict_counted_rolls',
+            TRACK_ROLL_TYPE: 'track_roll_type'
         }
     }
 
@@ -272,6 +273,15 @@ class RollTracker {
                     config: true,
                     hint: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.RESTRICT_COUNTED_ROLLS}.Hint`,
                 })
+                // A setting to determine if rolls should be tracked by type
+                game.settings.register(this.ID, this.SETTINGS.PF2E.TRACK_ROLL_TYPE, {
+                    name: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.TRACK_ROLL_TYPE}.Name`,
+                    default: true,
+                    type: Boolean,
+                    scope: 'world',
+                    config: true,
+                    hint: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.TRACK_ROLL_TYPE}.Hint`,
+                });
                 break;
         }   
     }
@@ -354,6 +364,7 @@ class RollTrackerData {
     }
 
     static createTrackedRoll(user, rollData, isBlind) {
+        console.log({rollData})
         if (game.userId === user.id) {
         // this check is necessary because (I think) every instance of foundry currently running tries
         // to create and update these rolls. Players, however, do not have permission to edit the data
