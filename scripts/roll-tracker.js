@@ -799,6 +799,7 @@ class RollTrackerDialog extends FormApplication {
         const defaults = super.defaultOptions
         const overrides = {
             height: 'auto',
+            width: 300,
             id: 'roll-tracker',
             template: RollTracker.TEMPLATES.ROLLTRACK,
             title: 'Roll Tracker',
