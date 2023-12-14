@@ -889,6 +889,17 @@ class RollTrackerDialog extends FormApplication {
                 onclick: ev => {
                     this.prepCompCard()
                 }
+            }, {
+                class: "roll-tracker-delete-all-rolls",
+                icon: "fas fa-trash",
+                onclick: async ev => {
+                    const confirmed = await Dialog.confirm({
+                        title: 'Delete All Rolls?',
+                        content: '<p>Are you sure you want to delete ALL rolls from ALL players?</p><p>This CANNOT be undone.</p>',
+                        defaultYes: false,
+                    })
+                    if (confirmed) await Promise.all(game.users.map(u => RollTrackerData.clearTrackedRolls(u.id)))
+                }
             })
         }
         return buttons
