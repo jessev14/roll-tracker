@@ -477,13 +477,13 @@ class RollTrackerData {
         return rolls.sort((a, b) => a - b)
     }
 
+    // TODO: extend this implementation to prep tracked rolls of different types
     static async prepTrackedRolls(userId) { 
     // Package data for access via the FormApplication
 
         const username = this.getUserRolls(userId).user.name
         const thisUserId = this.getUserRolls(userId).user.id
         const printRolls = this.getUserRolls(userId).sorted
-
         let stats = {}
 
         if (!printRolls) {
@@ -501,7 +501,23 @@ class RollTrackerData {
             // For debugging purposes primarily:
             // stats.lastRoll = this.getUserRolls(userId)?.unsorted.at(-1)
         }
-        
+
+        if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
+            stats.rollTypes = {};
+            const rollTypeLabelMap = {
+                'attack-roll': 'Attack Rolls',
+                'skill-check': 'Skill Checks',
+                'saving-throw': 'Saving Throws'
+            };
+            for (const [k,v ] of Object.entries(RollTrackerData.getUserRolls(userId))) {
+                if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
+
+                stats.rollTypes[k] = await this.calculate(v);
+                stats.rollTypes[k].label = rollTypeLabelMap[k];
+            }
+        }
+
+        console.log(stats)
         return { username, thisUserId, stats 
             /**, averages */ }
     }
@@ -791,6 +807,9 @@ class RollTrackerDialog extends FormApplication {
         rollData.stats.mode = modeString
         // rollData.averages.mode = modeString_averages
 
+        if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) rollData.trackRollTypes = true;
+
+        console.log({data: rollData})
         return rollData
     }
 

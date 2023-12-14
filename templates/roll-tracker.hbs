@@ -2,6 +2,7 @@
 <form>
     <div class="roll-tracker-form flexcol" data-userId="{{thisUserId}}">
         <h1 class="roll-tracker-form-heading">{{username}}</h1>
+        {{#if trackRollTypes}}<h2 class="roll-tracker-form-heading">All Rolls</h2>{{/if}}
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
@@ -12,8 +13,26 @@
             {{#if stats.lastRoll}} <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.lastRoll"}}: </span>{{stats.lastRoll}}</li> {{/if}}
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
         </ul>
+
+        {{#if trackRollTypes}}
+        {{#each stats.rollTypes as |rollType id|}}
+        <h2 class="roll-tracker-form-heading">{{rollType.label}}</h2>
+        <ul class="roll-tracker-form flexcol">
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{rollType.mean}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{rollType.median}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}} ({{rollType.comparator}}
+                {{#if (isOne rollType.comparator)}} instance{{else}} instances{{/if}}{{#if (isTie rollType.mode)}} each{{/if}}): </span>{{rollType.mode}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{rollType.nat1s}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{rollType.nat20s}}</li>
+            {{#if rollType.lastRoll}} <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.lastRoll"}}: </span>{{rollType.lastRoll}}</li> {{/if}}
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{rollType.count}}</li>
+        </ul>
+        {{/each}}
+        {{/if}}
+
         <button type="button" class="roll-tracker-form-button-delete" data-action="clear"><i class="fas fa-times"></i>{{localize "ROLL-TRACKER.form-button.clear"}}</button>
         <button type="button" class="roll-tracker-form-button-print" data-action="print"><i class="fas fa-eye"></i>{{localize "ROLL-TRACKER.form-button.print"}}</button>
+
 
     </div>
 </form>
