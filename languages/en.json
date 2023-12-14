@@ -87,6 +87,9 @@
                 "track_roll_type": {
                     "Name": "Track Rolls by Type",
                     "Hint": "If enabled, rolls will be tracked by type: Skill Checks, Attack Rolls, Saving Throws, and other rolls."
+                },
+                "all_rolls": {
+                    "Name": "Enable All Rolls Section"
                 }
             }
         },

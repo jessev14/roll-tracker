@@ -88,6 +88,15 @@ Hooks.once('ready', () => {
     }) 
 })
 
+Hooks.on('renderRollTrackerDialog', (app, [html], appData) => {
+    if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.ALL_ROLLS)) return;
+
+    const ul = html.querySelector('ul');
+    ul.previousElementSibling.remove();
+    ul.remove();
+    app.setPosition({ height: 'auto' });
+});
+
 // The following helper functions help us to make and display the right strings for chat cards and the comparison card
 // Mostly they're checking for multiple modes, or ties in the case of the comparison card
 Handlebars.registerHelper('isOne', function (value) {
@@ -159,7 +168,8 @@ class RollTracker {
         },
         PF2E: {
             RESTRICT_COUNTED_ROLLS: 'restrict_counted_rolls',
-            TRACK_ROLL_TYPE: 'track_roll_type'
+            TRACK_ROLL_TYPE: 'track_roll_type',
+            ALL_ROLLS: 'all_rolls'
         }
     }
 
@@ -281,6 +291,14 @@ class RollTracker {
                     scope: 'world',
                     config: true,
                     hint: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.TRACK_ROLL_TYPE}.Hint`,
+                });
+                // A setting to enable "All Rolls" section
+                game.settings.register(this.ID, this.SETTINGS.PF2E.ALL_ROLLS, {
+                    name: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.ALL_ROLLS}.Name`,
+                    default: true,
+                    type: Boolean,
+                    scope: 'world',
+                    config: true,
                 });
                 break;
         }   
@@ -503,7 +521,9 @@ class RollTrackerData {
         }
 
         if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
-            stats.rollTypes = {};
+            const rollTypes = {};
+            const rolls = [];
+            // stats.rollTypes = {};
             const rollTypeLabelMap = {
                 'attack-roll': 'Attack Rolls',
                 'skill-check': 'Skill Checks',
@@ -512,9 +532,12 @@ class RollTrackerData {
             for (const [k,v ] of Object.entries(RollTrackerData.getUserRolls(userId))) {
                 if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
 
-                stats.rollTypes[k] = await this.calculate(v);
-                stats.rollTypes[k].label = rollTypeLabelMap[k];
+                rollTypes[k] = await this.calculate(v);
+                rollTypes[k].label = rollTypeLabelMap[k];
+                rolls.push(...v);
             }
+            stats = await this.calculate(rolls);
+            stats.rollTypes = rollTypes;
         }
 
         console.log(stats)
