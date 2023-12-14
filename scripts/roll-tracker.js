@@ -88,14 +88,6 @@ Hooks.once('ready', () => {
     }) 
 })
 
-Hooks.on('renderRollTrackerDialog', (app, [html], appData) => {
-    if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.ALL_ROLLS)) return;
-
-    const ul = html.querySelector('ul');
-    ul.previousElementSibling.remove();
-    ul.remove();
-    app.setPosition({ height: 'auto' });
-});
 
 // The following helper functions help us to make and display the right strings for chat cards and the comparison card
 // Mostly they're checking for multiple modes, or ties in the case of the comparison card
@@ -379,7 +371,6 @@ class RollTrackerData {
     }
 
     static createTrackedRoll(user, rollData, isBlind) {
-        console.log({rollData})
         if (game.userId === user.id) {
             const trackRollTypes = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE);
             const rollType = rollData.type || 'other';
@@ -523,7 +514,6 @@ class RollTrackerData {
         if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
             const rollTypes = {};
             const rolls = [];
-            // stats.rollTypes = {};
             const rollTypeLabelMap = {
                 'attack-roll': 'Attack Rolls',
                 'skill-check': 'Skill Checks',
@@ -538,9 +528,9 @@ class RollTrackerData {
             }
             stats = await this.calculate(rolls);
             stats.rollTypes = rollTypes;
+            stats.allRolls = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.ALL_ROLLS);
         }
 
-        console.log(stats)
         return { username, thisUserId, stats 
             /**, averages */ }
     }
@@ -830,9 +820,6 @@ class RollTrackerDialog extends FormApplication {
         rollData.stats.mode = modeString
         // rollData.averages.mode = modeString_averages
 
-        if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) rollData.trackRollTypes = true;
-
-        console.log({data: rollData})
         return rollData
     }
 
