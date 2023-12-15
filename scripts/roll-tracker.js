@@ -373,7 +373,8 @@ class RollTrackerData {
     static createTrackedRoll(user, rollData, isBlind) {
         if (game.userId === user.id) {
             const trackRollTypes = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE);
-            const rollType = rollData.type || 'other';
+            let rollType = rollData.type || other;
+            if (['initiative', 'perception-check'].includes(rollData.type)) rollType = 'skill-check';
         // this check is necessary because (I think) every instance of foundry currently running tries
         // to create and update these rolls. Players, however, do not have permission to edit the data
         // of other users, so errors are thrown. This way the only foundry instance that creates the tracked
@@ -885,6 +886,12 @@ class RollTrackerDialog extends FormApplication {
         let buttons = super._getHeaderButtons();
         if (game.user.isGM) {
             buttons.splice(0, 0, {
+                class: "roll-tracker-global-export",
+                icon: "fas fa-download",
+                onclick: async ev => {
+                    
+                }
+            },{
                 class: "roll-tracker-form-comparison",
                 icon: "fas fa-chart-simple",
                 onclick: ev => {
