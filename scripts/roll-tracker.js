@@ -921,7 +921,6 @@ class RollTrackerDialog extends FormApplication {
                         await RollTrackerData.prepTrackedRolls(user.id);
                         const flagKey = rollType === 'all-rolls' ? 'export' : rollType + '-export';
                         const userExportData = RollTrackerData.getUserRolls(user.id)?.[flagKey].replace(/\n/g, `,${user.name}\n`);
-                        console.log(userExportData);
                         if (userExportData) exportData += userExportData;
                     }
                     saveDataToFile(exportData, 'string', 'global-' + rollType + '-data.txt');            
