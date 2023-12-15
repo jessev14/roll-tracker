@@ -805,6 +805,7 @@ class RollTrackerDialog extends FormApplication {
         const defaults = super.defaultOptions
         const overrides = {
             height: 'auto',
+            width: 300,
             id: 'roll-tracker',
             template: RollTracker.TEMPLATES.ROLLTRACK,
             title: 'Roll Tracker',
@@ -889,7 +890,41 @@ class RollTrackerDialog extends FormApplication {
                 class: "roll-tracker-global-export",
                 icon: "fas fa-download",
                 onclick: async ev => {
+                    const rollTypeLabelMap = {
+                        'attack-roll': 'Attack Rolls',
+                        'skill-check': 'Skill Checks',
+                        'saving-throw': 'Saving Throws'
+                    };        
+                    let rollType;
+                    if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
+                        const buttons = {
+                            'all-rolls': { label: 'All Rolls' }
+                        };
+                        for (const rType of Object.keys(rollTypeLabelMap)) {
+                            buttons[rType] = { label: rollTypeLabelMap[rType] }
+                        }
+                        rollType = await Dialog.wait({
+                            title: 'Global Export',
+                            content: `
+                                <style>
+                                    #global-export .dialog-buttons {
+                                        flex-direction: column;
+                                    }
+                                </style>
+                            `,
+                            buttons
+                        }, { id: 'global-export', width: 300 });
+                    }
                     
+                    let exportData = ``;
+                    for (const user of game.users) {
+                        await RollTrackerData.prepTrackedRolls(user.id);
+                        const flagKey = rollType === 'all-rolls' ? 'export' : rollType + '-export';
+                        const userExportData = RollTrackerData.getUserRolls(user.id)?.[flagKey].replace(/\n/g, `,${user.name}\n`);
+                        console.log(userExportData);
+                        if (userExportData) exportData += userExportData;
+                    }
+                    saveDataToFile(exportData, 'string', 'global-' + rollType + '-data.txt');            
                 }
             },{
                 class: "roll-tracker-form-comparison",
@@ -902,7 +937,7 @@ class RollTrackerDialog extends FormApplication {
                 icon: "fas fa-trash",
                 onclick: async ev => {
                     const confirmed = await Dialog.confirm({
-                        title: 'Delete All Rolls?',
+                        title: 'Global Delete',
                         content: '<p>Are you sure you want to delete ALL rolls from ALL players?</p><p>This CANNOT be undone.</p>',
                         defaultYes: false,
                     })
