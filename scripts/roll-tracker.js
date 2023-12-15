@@ -486,7 +486,6 @@ class RollTrackerData {
         return rolls.sort((a, b) => a - b)
     }
 
-    // TODO: extend this implementation to prep tracked rolls of different types
     static async prepTrackedRolls(userId) { 
     // Package data for access via the FormApplication
 
@@ -519,7 +518,7 @@ class RollTrackerData {
                 'skill-check': 'Skill Checks',
                 'saving-throw': 'Saving Throws'
             };
-            for (const [k,v ] of Object.entries(RollTrackerData.getUserRolls(userId))) {
+            for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(userId))) {
                 if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
 
                 rollTypes[k] = await this.calculate(v);
