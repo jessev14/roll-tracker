@@ -520,8 +520,9 @@ class RollTrackerData {
             };
             for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(userId))) {
                 if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
+                if (k.includes('export')) continue;
 
-                rollTypes[k] = await this.calculate(v);
+                rollTypes[k] = await this.calculate(v, k);
                 rollTypes[k].label = rollTypeLabelMap[k];
                 rolls.push(...v);
             }
@@ -534,7 +535,7 @@ class RollTrackerData {
             /**, averages */ }
     }
 
-    static async calculate(rolls) {
+    static async calculate(rolls, rollType) {
     // Turn the raw data array into usable stats:
     // Mean
         const sum = rolls.reduce((firstValue, secondValue) => {
@@ -569,7 +570,7 @@ class RollTrackerData {
 
     // We prepare the export data file at this point because the data is conveniently
     // ordered in modeObj
-        this.prepareExportData(modeObj)
+        this.prepareExportData(modeObj, rollType)
 
     // How many Nat1s or Nat20s do we have? Convert into % as well.
         const nat1s = modeObj[1] || 0
@@ -621,7 +622,7 @@ class RollTrackerData {
         return { modeObj, mode, comparator }
     }
 
-    static prepareExportData(data) {
+    static prepareExportData(data, rollType) {
     // prepare the roll data for export to an R-friendly text file
         const keys = Object.keys(data)
         let fileContent = ``
@@ -630,7 +631,7 @@ class RollTrackerData {
         }
         // We store the filecontent on a flag on the user so it can be quickly accessed if the user
         // decides to click the export button on the RollTrackerDialog header
-        game.users.get(game.userId)?.setFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT, fileContent)
+        game.users.get(game.userId)?.setFlag(RollTracker.ID, rollType ? `${rollType}-export` : RollTracker.FLAGS.EXPORT, fileContent)
     }
 
     /**
@@ -803,7 +804,6 @@ class RollTrackerDialog extends FormApplication {
         const defaults = super.defaultOptions
         const overrides = {
             height: 'auto',
-            width: 300,
             id: 'roll-tracker',
             template: RollTracker.TEMPLATES.ROLLTRACK,
             title: 'Roll Tracker',
@@ -841,6 +841,13 @@ class RollTrackerDialog extends FormApplication {
         // the keyword 'this' will refer to the current value of this as used in the bind function
         // i.e. RollTrackerDialog
         html.on('click', "[data-action]", this._handleButtonClick.bind(this))
+        html.on('click', ".roll-tracker-form-export", ev => {
+            const { currentTarget } = ev;
+            const rollType = currentTarget.parentElement.dataset.rollType;
+            const flagKey = rollType === 'all-rolls' ? 'export' : `${rollType}-export`
+            const exportData = RollTrackerData.getUserRolls(game.user.id)[flagKey];
+            saveDataToFile(exportData, 'string', rollType + '-data.txt');            
+        })
     }
 
     async _handleButtonClick(event) {
@@ -876,19 +883,8 @@ class RollTrackerDialog extends FormApplication {
     // This function gets the header data from FormApplication but modifies it to add our export button
     _getHeaderButtons() {
         let buttons = super._getHeaderButtons();
-        buttons.splice(0, 0, {
-            class: "roll-tracker-form-export",
-            icon: "fas fa-download",
-            onclick: ev => {
-                if (this.exportData) {
-                    saveDataToFile(this.exportData, 'string', 'roll-data.txt')
-                } else {
-                    return ui.notifications.warn("No roll data to export")
-                }
-            }
-        })
         if (game.user.isGM) {
-            buttons.splice(1, 0, {
+            buttons.splice(0, 0, {
                 class: "roll-tracker-form-comparison",
                 icon: "fas fa-chart-simple",
                 onclick: ev => {

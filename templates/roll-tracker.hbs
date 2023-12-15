@@ -3,7 +3,10 @@
     <div class="roll-tracker-form flexcol" data-userId="{{thisUserId}}">
         <h1 class="roll-tracker-form-heading">{{username}}</h1>
         {{#if stats.allRolls}}
-        {{#if stats.rollTypes}}<h2 class="roll-tracker-form-heading">All Rolls</h2>{{/if}}
+        {{#if stats.rollTypes}}<h2 class="roll-tracker-form-heading" data-roll-type="all-rolls">
+            All Rolls
+            <a class="roll-tracker-form-export"><i class="fas fa-download"></i></a>
+        </h2>{{/if}}
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
@@ -18,7 +21,10 @@
 
         {{#if stats.rollTypes}}
         {{#each stats.rollTypes as |rollType id|}}
-        <h2 class="roll-tracker-form-heading">{{rollType.label}}</h2>
+        <h2 class="roll-tracker-form-heading" data-roll-type="{{id}}">
+            {{rollType.label}}
+            <a class="roll-tracker-form-export"><i class="fas fa-download"></i></a>
+        </h2>
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{rollType.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{rollType.median}}</li>

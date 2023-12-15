@@ -20,7 +20,9 @@
 .roll-tracker-form-heading {
     font-size: large;
     font-weight: bold;
-    margin: 0 0 0.4rem
+    margin: 0 0 0.4rem;
+    display: flex;
+    justify-content: space-between;
 }
 
 .roll-tracker-comparison-card-heading {
