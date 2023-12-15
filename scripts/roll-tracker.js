@@ -650,7 +650,10 @@ class RollTrackerData {
             if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
                 rolls = [];
                 for (const [k, v] of Object.entries(this.getUserRolls(user.id))) {
-                    if (!['user', 'unsorted', 'export', 'streak'].includes(k)) rolls.push(...v);
+                    if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
+                    if (k.includes('export')) continue;
+                    
+                    rolls.push(...v);
                 }
             } else rolls = this.getUserRolls(user.id)?.sorted;
             allStats[`${user.id}`] = await this.calculate(rolls)
