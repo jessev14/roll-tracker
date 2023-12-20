@@ -12,7 +12,7 @@
     "compatibleCoreVersion": "10.0.0",
     "scripts": [
         "scripts/roll-tracker.js",
-        "scripts/plotly-2.27.0.min.js"
+        "scripts/chart.umd.min.js"
     ],
     "styles": [
         "styles/roll-tracker.css"

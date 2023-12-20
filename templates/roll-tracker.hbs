@@ -5,7 +5,10 @@
         {{#if stats.allRolls}}
         {{#if stats.rollTypes}}<h2 class="roll-tracker-form-heading" data-roll-type="all-rolls">
             All Rolls
-            <a class="roll-tracker-form-export"><i class="fas fa-download"></i></a>
+            <div>
+                <a class="roll-tracker-plot"><i class="fas fa-chart-simple"></i></a>
+                <a class="roll-tracker-form-export"><i class="fas fa-download"></i></a>
+            </div>
         </h2>{{/if}}
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
@@ -23,7 +26,10 @@
         {{#each stats.rollTypes as |rollType id|}}
         <h2 class="roll-tracker-form-heading" data-roll-type="{{id}}">
             {{rollType.label}}
+        <div>
+            <a class="roll-tracker-plot"><i class="fas fa-chart-simple"></i></a>
             <a class="roll-tracker-form-export"><i class="fas fa-download"></i></a>
+        </div>
         </h2>
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{rollType.mean}}</li>

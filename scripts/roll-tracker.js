@@ -135,6 +135,13 @@ class RollTracker {
         CHATMSG: `modules/${this.ID}/templates/${this.ID}-chat.hbs`,
         COMPARISONCARD: `modules/${this.ID}/templates/${this.ID}-comparison-card.hbs`
     }
+    
+    static PF2E_rollTypeLabelMap = {
+        'attack-roll': 'Attack Rolls',
+        'skill-check': 'Skill Checks',
+        'saving-throw': 'Saving Throws'
+    };
+
 
     // This logging function ties in with the Developer Mode module. It will log a custom, module namespaced
     // message in the dev console when RollTracker.log() is called. When Developer Mode is not enabled (as in
@@ -373,7 +380,7 @@ class RollTrackerData {
     static createTrackedRoll(user, rollData, isBlind) {
         if (game.userId === user.id) {
             const trackRollTypes = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE);
-            let rollType = rollData.type || other;
+            let rollType = rollData.type || 'other';
             if (['initiative', 'perception-check'].includes(rollData.type)) rollType = 'skill-check';
         // this check is necessary because (I think) every instance of foundry currently running tries
         // to create and update these rolls. Players, however, do not have permission to edit the data
@@ -514,17 +521,12 @@ class RollTrackerData {
         if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
             const rollTypes = {};
             const rolls = [];
-            const rollTypeLabelMap = {
-                'attack-roll': 'Attack Rolls',
-                'skill-check': 'Skill Checks',
-                'saving-throw': 'Saving Throws'
-            };
             for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(userId))) {
                 if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
                 if (k.includes('export')) continue;
 
                 rollTypes[k] = await this.calculate(v, k);
-                rollTypes[k].label = rollTypeLabelMap[k];
+                rollTypes[k].label = RollTracker.PF2E_rollTypeLabelMap[k] || 'Other Rolls';
                 rolls.push(...v);
             }
             stats = await this.calculate(rolls);
@@ -652,7 +654,7 @@ class RollTrackerData {
                 for (const [k, v] of Object.entries(this.getUserRolls(user.id))) {
                     if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
                     if (k.includes('export')) continue;
-                    
+
                     rolls.push(...v);
                 }
             } else rolls = this.getUserRolls(user.id)?.sorted;
@@ -848,10 +850,94 @@ class RollTrackerDialog extends FormApplication {
         html.on('click', "[data-action]", this._handleButtonClick.bind(this))
         html.on('click', ".roll-tracker-form-export", ev => {
             const { currentTarget } = ev;
-            const rollType = currentTarget.parentElement.dataset.rollType;
-            const flagKey = rollType === 'all-rolls' ? 'export' : `${rollType}-export`
+            const rollType = currentTarget.closest('h2').dataset.rollType;
+            const flagKey = rollType === 'all-rolls' ? 'export' : `${rollType}-export`;
             const exportData = RollTrackerData.getUserRolls(game.user.id)[flagKey];
             saveDataToFile(exportData, 'string', rollType + '-data.txt');            
+        })
+        html.on('click', ".roll-tracker-plot", async ev => {
+            const { currentTarget } = ev;
+            const rollType = currentTarget.closest('h2').dataset.rollType;
+            const rolls = [];
+            if (rollType === 'all-rolls') {
+                for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(game.user.id))) {
+                    if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
+                    if (k.includes('export')) continue;
+
+                    rolls.push(...v);
+                }
+            } else rolls.push(...RollTrackerData.getUserRolls(game.user.id)[rollType]);
+            const rIntermediate = await RollTrackerData.calcMode(rolls);
+            const barData = [];
+            for (let i = 1; i < 21; i++ ) {
+                barData.push(rIntermediate.modeObj[i] || 0);
+            }
+            const d = new Dialog({
+                title: `${rollType === 'all-rolls' ? 'All Rolls' : RollTracker.PF2E_rollTypeLabelMap[rollType]} Distribution`,
+                content: `
+                    <style>
+                        #rollTrackerPlot div.dialog-buttons {
+                            flex: 0;
+                        }
+                    </style>
+                    <div style="width: 450px; height: 450px; margin-left: 8px; margin-top: 20px;"><canvas id="myChart"></canvas></div>
+                `,
+                buttons: {},
+                render: () => {
+                    const chart = document.getElementById('myChart');
+                    const config = {
+                        type: 'bar',
+                        data: {
+                            labels: Array.fromRange(20, 1),
+                            datasets: [{
+                                data: barData
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'd20 Result',
+                                        font: {
+                                            weight: 700
+                                        }
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Frequency',
+                                        font: {
+                                            weight: 700
+                                        }
+                                    }
+                                }
+                            },
+                            maintainAspectRatio: false,
+                            plugins: {
+                                interaction: {
+                                    mode: 'y'
+                                },
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    displayColors: false,
+                                    callbacks: {
+                                        title: function(tooltipItems, data) {
+                                            return '';
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                    new Chart(chart, config);
+                }
+            }, { id: 'rollTrackerPlot', height: 530, width: 500 });
+            d.render(true);
         })
     }
 
@@ -893,18 +979,13 @@ class RollTrackerDialog extends FormApplication {
                 class: "roll-tracker-global-export",
                 icon: "fas fa-download",
                 onclick: async ev => {
-                    const rollTypeLabelMap = {
-                        'attack-roll': 'Attack Rolls',
-                        'skill-check': 'Skill Checks',
-                        'saving-throw': 'Saving Throws'
-                    };        
                     let rollType;
                     if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PF2E.TRACK_ROLL_TYPE)) {
                         const buttons = {
                             'all-rolls': { label: 'All Rolls' }
                         };
-                        for (const rType of Object.keys(rollTypeLabelMap)) {
-                            buttons[rType] = { label: rollTypeLabelMap[rType] }
+                        for (const rType of Object.keys(RollTracker.PF2E_rollTypeLabelMap)) {
+                            buttons[rType] = { label: RollTracker.PF2E_rollTypeLabelMap[rType] }
                         }
                         rollType = await Dialog.wait({
                             title: 'Global Export',
@@ -930,7 +1011,7 @@ class RollTrackerDialog extends FormApplication {
                 }
             },{
                 class: "roll-tracker-form-comparison",
-                icon: "fas fa-chart-simple",
+                icon: "fas fa-ranking-star",
                 onclick: ev => {
                     this.prepCompCard()
                 }
