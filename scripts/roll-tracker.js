@@ -911,6 +911,9 @@ class RollTrackerDialog extends FormApplication {
                                         font: {
                                             weight: 700
                                         }
+                                    },
+                                    ticks: {
+                                        precision: 0
                                     }
                                 }
                             },
