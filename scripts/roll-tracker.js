@@ -539,6 +539,7 @@ class RollTrackerData {
     }
 
     static async calculate(rolls, rollType) {
+        if (!rolls.length) return ui.notifications.warn('No tracked rolls.');
     // Turn the raw data array into usable stats:
     // Mean
         const sum = rolls.reduce((firstValue, secondValue) => {
