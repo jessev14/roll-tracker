@@ -539,13 +539,12 @@ class RollTrackerData {
     }
 
     static async calculate(rolls, rollType) {
-        if (!rolls.length) return ui.notifications.warn('No tracked rolls.');
     // Turn the raw data array into usable stats:
     // Mean
         const sum = rolls.reduce((firstValue, secondValue) => {
             return firstValue + secondValue
-        })
-        const mean = Math.round(sum / rolls.length)
+        }, 0)
+        const mean = Math.round(sum / rolls.length) || 0;
 
     // Median
         // We've already sorted the rolls as they've come in
@@ -564,6 +563,7 @@ class RollTrackerData {
             // There's a shorter way of doing this but this makes the most sense to me for later
             median = (rolls[beforeMedian-1] + rolls[afterMedian-1]) / 2
         }
+        median = median || 0;
          
 
     // Mode
