@@ -851,23 +851,25 @@ class RollTrackerDialog extends FormApplication {
         html.on('click', "[data-action]", this._handleButtonClick.bind(this))
         html.on('click', ".roll-tracker-form-export", ev => {
             const { currentTarget } = ev;
+            const userID = currentTarget.closest('div[data-userId').dataset.userid;
             const rollType = currentTarget.closest('h2').dataset.rollType;
             const flagKey = rollType === 'all-rolls' ? 'export' : `${rollType}-export`;
-            const exportData = RollTrackerData.getUserRolls(game.user.id)[flagKey];
+            const exportData = RollTrackerData.getUserRolls(userID)[flagKey];
             saveDataToFile(exportData, 'string', rollType + '-data.txt');            
         })
         html.on('click', ".roll-tracker-plot", async ev => {
             const { currentTarget } = ev;
+            const userID = currentTarget.closest('div[data-userId').dataset.userid;
             const rollType = currentTarget.closest('h2').dataset.rollType;
             const rolls = [];
             if (rollType === 'all-rolls') {
-                for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(game.user.id))) {
+                for (const [k, v] of Object.entries(RollTrackerData.getUserRolls(userID))) {
                     if (['user', 'unsorted', 'export', 'streak'].includes(k)) continue;
                     if (k.includes('export')) continue;
 
                     rolls.push(...v);
                 }
-            } else rolls.push(...RollTrackerData.getUserRolls(game.user.id)[rollType]);
+            } else rolls.push(...RollTrackerData.getUserRolls(userID)[rollType]);
             const rIntermediate = await RollTrackerData.calcMode(rolls);
             const barData = [];
             for (let i = 1; i < 21; i++ ) {
